@@ -101,7 +101,7 @@ build.R = function(data)
 }
 
 
-objective.ML = function(theta, y, R, dist = c("gaussian", "laplace", "t", "beta", "gamma", "empirical"), F.hat = NULL)
+objective.ML = function(theta, y, R, dist = c("gaussian", "laplace", "t", "beta", "gamma", "empirical", "kumaraswamy"), F.hat = NULL)
 {
     vals = sort(unique(R[R != 0 & R != 1]))
     m = length(vals)
@@ -120,6 +120,7 @@ objective.ML = function(theta, y, R, dist = c("gaussian", "laplace", "t", "beta"
                t = pt(y, df = rest[1], ncp = rest[2]),
                beta = pbeta(y, shape1 = rest[1], shape2 = rest[2]),
                gamma = pgamma(y, shape = rest[1], rate = rest[2]),
+               kumaraswamy = pkumar(y, a = rest[1], b = rest[2]),
                empirical = F.hat(y))
     z = qnorm(u)
     z = ifelse(z == -Inf, qnorm(0.0001), z)
@@ -135,6 +136,7 @@ objective.ML = function(theta, y, R, dist = c("gaussian", "laplace", "t", "beta"
                   t = dt(y, df = rest[1], ncp = rest[2], log = TRUE),
                   beta = dbeta(y, shape1 = rest[1], shape2 = rest[2], log = TRUE),
                   gamma = dgamma(y, shape = rest[1], rate = rest[2], log = TRUE),
+                  kumaraswamy = dkumar(y, a = rest[1], b = rest[2], log = TRUE),
                   empirical = 0)
     obj = as.numeric(0.5 * (determinant(R, logarithm = TRUE)$modulus + qform - sum(z^2)) - sum(logf))
     obj
@@ -392,7 +394,9 @@ sklarsomega.control = function(level, confint, verbose, control)
     }
     else if (level == "ratio")
     {
-        control$dist = "beta"
+        dist = control$dist
+        if (is.null(dist) || length(dist) > 1 || ! dist %in% c("beta", "kumaraswamy"))
+            stop("\nControl parameter 'dist' must be \"beta\" or \"kumaraswamy\".")
         if (confint == "bootstrap")
             boot = TRUE
     }
@@ -610,11 +614,9 @@ sandwich.helper = function(object)
 #'
 #' If the level of measurement is nominal or ordinal, the scores (which must take values in \eqn{1, \dots , K}) are assumed to share a common categorical marginal distribution. If \eqn{K} is less than 5, a composite marginal likelihood (CML) approach is used. If \eqn{K} is greater than or equal to 5, the distributional transform (DT) approximation is used. In either case, two types of confidence interval are available: bootstrap or asymptotic. See the package vignette for details.
 #'
-#' If the level of measurement is ratio, the scores are assumed to share a common beta distribution, and the method of maximum likelihood (ML) is used. Both bootstrap and asymptotic confidence intervals are available.
+#' If the level of measurement is interval or ratio, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, and \code{"empirical"}, or from among \code{"beta"} or \code{"kumaraswamy"}, respectively. The ML method is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
 #'
-#' If the level of measurement is interval, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, and \code{"empirical"}. The ML method is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
-#'
-#' Appropriate sample quantities are used as starting values for all marginal parameters, regardless of the level of measurement. Details are provided in the package vignette.
+#' When applicable, functions of appropriate sample quantities are used as starting values for marginal parameters, regardless of the level of measurement. Details are provided in the package vignettes.
 #'
 #' @param data a matrix of scores. Each row corresponds to a unit, each column a coder. The columns must be named appropriately so that the correct copula correlation matrix can be constructed. See \code{\link{build.R}} for details regarding column naming.
 #' @param level the level of measurement, one of \code{"nominal"}, \code{"ordinal"}, \code{"interval"}, or \code{"ratio"}.
@@ -623,15 +625,15 @@ sandwich.helper = function(object)
 #' @param control a list of control parameters.
 #'    \describe{
 #'        \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"}, or when \code{confint = "asymptotic"} and \code{level = "nominal"} or \code{level = "ordinal"}. Defaults to 1,000.}
-#'        \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, or \code{"empirical"}.}
+#'        \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, or \code{"empirical"}; when \code{level = "ratio"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
 #'        \item{nodes}{the desired number of nodes in the cluster.}
 #'        \item{parallel}{logical; if TRUE (the default), bootstrapping is done in parallel.}
 #'        \item{type}{one of the supported cluster types for \code{\link[parallel]{makeCluster}}. Defaults to \code{"SOCK"}.}
 #' }
 #'
 #' @return Function \code{sklars.omega} returns an object of class \code{"sklarsomega"}, which is a list comprising the following elements.
-#'         \item{AIC}{the value of AIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}.}
-#'         \item{BIC}{the value of BIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}.}
+#'         \item{AIC}{the value of AIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
+#'         \item{BIC}{the value of BIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
 #'         \item{boot.sample}{when applicable, the bootstrap sample.}
 #'         \item{call}{the matched call.}
 #'         \item{coefficients}{a named vector of parameter estimates.}
@@ -642,7 +644,7 @@ sandwich.helper = function(object)
 #'         \item{data}{the matrix of scores, perhaps altered to remove rows (units) containing fewer than two scores.}
 #'         \item{iter}{if optimization converged, the value of \code{iter} returned by \code{\link{optim}}.}
 #'         \item{level}{the level of measurement.}
-#'         \item{message}{the value of \code{massage} returned by \code{\link{optim}}.}
+#'         \item{message}{the value of \code{message} returned by \code{\link{optim}}.}
 #'         \item{method}{the approach to inference, one of \code{"CML"}, \code{"DT"}, \code{"ML"}, or \code{"SMP"} (semiparametric).}
 #'         \item{mpar}{the number of marginal parameters.}
 #'         \item{npar}{the total number of parameters.}
@@ -656,8 +658,6 @@ sandwich.helper = function(object)
 #'
 #' @references
 #' Hughes, J. (2018). Sklar's Omega: A Gaussian copula-based framework for assessing agreement. \emph{ArXiv e-prints}, March.
-#' @references
-#' Krippendorff, K. (2013). Computing Krippendorff's alpha-reliability. Technical report, University of Pennsylvania.
 #' @references
 #' Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 #'
@@ -681,6 +681,7 @@ sandwich.helper = function(object)
 #' # all but one of the available cores. Since we set 'verbose' equal to TRUE, a
 #' # progress bar is displayed during the bootstrap.
 #'
+#' set.seed(12)
 #' fit = sklars.omega(data, level = "nominal", confint = "asymptotic", verbose = TRUE,
 #'                    control = list(bootit = 1000, parallel = TRUE,
 #'                    nodes = parallel::detectCores() - 1))
@@ -809,6 +810,13 @@ sklars.omega = function(data, level = c("nominal", "ordinal", "interval", "ratio
             upper = c(rep(0.999, m), rep(Inf, 2))
             cnames = c("alpha", "beta")
         }
+        else if (control$dist == "kumaraswamy")
+        {
+            init = c(1, 1)
+            lower = c(rep(0.001, m), rep(0.001, 2))
+            upper = c(rep(0.999, m), rep(Inf, 2))
+            cnames = c("a", "b")
+        }
         else if (control$dist == "t")
         {
             init = c(median(abs(y - median(y))), median(y))
@@ -879,7 +887,7 @@ sklars.omega = function(data, level = c("nominal", "ordinal", "interval", "ratio
     rm(temp)
     result$value = fit$value
     result$iter = fit$counts[1]
-    if (level == "interval" && method != "SMP")
+    if ((level == "interval" && method != "SMP") || level == "ratio")
     {
         result$AIC = 2 * result$value + 2 * npar
         result$BIC = 2 * result$value + log(length(y)) * npar
@@ -893,6 +901,7 @@ sklars.omega = function(data, level = c("nominal", "ordinal", "interval", "ratio
                t = pt(y, df = rest[1], ncp = rest[2]),
                beta = pbeta(y, shape1 = rest[1], shape2 = rest[2]),
                gamma = pgamma(y, shape = rest[1], rate = rest[2]),
+               kumaraswamy = pkumar(y, a = rest[1], b = rest[2]),
                empirical = F.hat(y),
                categorical = (sklarsomega::pcat(y, rest) + sklarsomega::pcat(y - 1, rest)) / 2)
     z = qnorm(u)
@@ -926,6 +935,592 @@ sklars.omega = function(data, level = c("nominal", "ordinal", "interval", "ratio
         }
     }
     result
+}
+
+
+sklarsomega.control.bayes = function(level, verbose, control, m)
+{
+    if (length(control) != 0)
+    {
+        nms = match.arg(names(control), c("minit", "maxit", "tol", "dist", "sigma.1", "sigma.2", "sigma.omega"), several.ok = TRUE)
+        control = control[nms]
+    }
+    if (level == "interval")
+    {
+        dist = control$dist
+        if (is.null(dist) || length(dist) > 1 || ! dist %in% c("gaussian", "laplace", "t", "gamma"))
+            stop("\nControl parameter 'dist' must be \"gaussian\", \"laplace\", \"t\", or \"gamma\".")
+    }
+    else
+    {
+        dist = control$dist
+        if (is.null(dist) || length(dist) > 1 || ! dist %in% c("beta", "kumaraswamy"))
+            stop("\nControl parameter 'dist' must be \"beta\" or \"kumaraswamy\".")
+    }
+    minit = control$minit
+    if (is.null(minit) || ! is.numeric(minit) || length(minit) > 1 || minit != as.integer(minit) || minit < 1000)
+    {
+        if (verbose)
+            cat("\nControl parameter 'minit' must be a positive integer >= 1,000. Setting it to the default value of 1,000.\n")
+        control$minit = 1000
+    }
+    maxit = control$maxit
+    if (is.null(maxit) || ! is.numeric(maxit) || length(maxit) > 1 || maxit != as.integer(maxit) || maxit < control$minit)
+    {
+        if (verbose)
+            cat("\nControl parameter 'maxit' must be a positive integer >= 'minit'. Setting it to the default value of max('minit', 10,000).\n")
+        control$maxit = max(control$minit, 10000)
+    }
+    tol = control$tol
+    if (! is.numeric(tol) || length(tol) > 1 || tol <= 0 || tol >= 1)
+    {
+        if (verbose)
+            cat("\nControl parameter 'tol' must be a number between 0 and 1. Setting it to the default value of 0.1.\n")
+        control$tol = 0.1
+    }
+    sigma.1 = control$sigma.1
+    if (is.null(sigma.1) || ! is.numeric(sigma.1) || length(sigma.1) > 1 || sigma.1 <= 0)
+    {
+        if (verbose)
+            cat("\nTuning parameter 'sigma.1' must be a positive number. Setting it to the default value of 0.1.\n")
+        control$sigma.1 = 0.1
+    }
+    sigma.2 = control$sigma.2
+    if (is.null(sigma.2) || ! is.numeric(sigma.2) || length(sigma.2) > 1 || sigma.2 <= 0)
+    {
+        if (verbose)
+            cat("\nTuning parameter 'sigma.2' must be a positive number. Setting it to the default value of 0.1.\n")
+        control$sigma.2 = 0.1
+    }
+    sigma.omega = control$sigma.omega
+    if (is.null(sigma.omega) || ! is.numeric(sigma.omega) || length(sigma.omega) != m || any(sigma.omega <= 0))
+    {
+        if (verbose)
+            cat("\nTuning parameter 'sigma.omega' must be an ", m, "-vector of positive numbers. Setting them to the default value of 0.1.\n", sep = "")
+        control$sigma.omega = rep(0.1, m)
+    }
+    control
+}
+
+
+quadratic.form = function(y, R, pfun, param1, param2)
+{
+    Q = try(solve.spam(as.spam(R)), silent = TRUE)
+    if (class(Q) == "try-error")
+        return(1e6)
+    u = pfun(y, param1, param2)
+    z = qnorm(u)
+    z = ifelse(z == -Inf, qnorm(0.0001), z)
+    z = ifelse(z == Inf, qnorm(0.9999), z)
+    f = try(-0.5 * (t(z) %*% Q %*% z - sum(z^2)))
+    if (class(f) == "try-error")
+        return(1e6)
+    f
+}
+
+
+sklars.omega.bayes.gaussian_laplace = function(y, R, verbose, control)
+{
+    minit = control$minit
+    maxit = control$maxit
+    tol = control$tol
+    m = length(unique(R[R != 0 & R != 1]))
+    vals = sort(unique(R[R != 0 & R != 1]))
+    R.old = R
+    if (control$dist == "gaussian")
+    {
+        pfun = pnorm
+        dfun = dnorm
+    }
+    else
+    {
+        pfun = plaplace
+        dfun = dlaplace
+    }
+    init = c(mean(y), sd(y))
+    cnames = c("mu", "sigma")
+    iterations = minit
+    samples = matrix(0, iterations + 1, m + 2)
+    samples[1, ] = c(rep(0, m), init)
+    colnames(samples)[(m + 1):(m + 2)] = cnames
+    R.new = R.old
+    sigma.1 = control$sigma.1
+    sigma.2 = control$sigma.2
+    sigma.omega = control$sigma.omega
+    alpha = beta = 0.01
+	tau = 1000
+    start = 1
+    i = 1
+    if (verbose)
+    {
+        pb = pbapply::startpb(0, maxit)
+        on.exit(pbapply::closepb(pb))
+        cat("\n")
+        flush.console()
+    }
+    repeat
+    {
+        for (j in (start + 1):(start + iterations))
+        {
+            if (verbose)
+                pbapply::setpb(pb, i)
+            i = i + 1
+            mu = samples[j - 1, m + 1]
+            sigma = samples[j - 1, m + 2]
+            eta = samples[j - 1, 1:m]
+            omega = exp(eta) / (1 + exp(eta))
+            for (k in 1:m)
+                R.old[R == vals[k]] = omega[k]
+	        mu_ = mu + rnorm(1, sd = sigma.1)
+	        log.epsilon = quadratic.form(y, R.old, pfun, mu_, sigma) - quadratic.form(y, R.old, pfun, mu, sigma)
+	        log.epsilon = log.epsilon + sum(dfun(y, mu_, sigma, log = TRUE)) - sum(dfun(y, mu, sigma, log = TRUE))
+	        log.epsilon = log.epsilon - 0.5 * (mu_^2 - mu^2) / tau^2
+	        samples[j, m + 1] = ifelse(log(runif(1)) < log.epsilon, mu_, mu)
+	        mu = samples[j, m + 1]
+				
+            sigma_ = exp(log(sigma) + rnorm(1, sd = sigma.2))
+            log.epsilon = quadratic.form(y, R.old, pfun, mu, sigma_) - quadratic.form(y, R.old, pfun, mu, sigma)
+            log.epsilon = log.epsilon + sum(dfun(y, mu, sigma_, log = TRUE)) - sum(dfun(y, mu, sigma, log = TRUE))
+            log.epsilon = log.epsilon + (alpha - 1) * (log(sigma_) - log(sigma)) + beta * (sigma - sigma_)
+            log.epsilon = log.epsilon + dlnorm(sigma, log(sigma_), sigma.2, log = TRUE) - dlnorm(sigma_, log(sigma), sigma.2, log = TRUE)
+            samples[j, m + 2] = ifelse(log(runif(1)) < log.epsilon, sigma_, sigma)
+            sigma = samples[j, m + 2]
+            
+            eta_ = eta + rnorm(m, sd = sigma.omega)
+            omega_ = exp(eta_) / (1 + exp(eta_))
+            for (k in 1:m)
+                R.new[R == vals[k]] = omega_[k]
+            log.epsilon = quadratic.form(y, R.new, pfun, mu, sigma) - quadratic.form(y, R.old, pfun, mu, sigma)
+            log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
+            log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
+            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (j == maxit)
+                break
+        }
+        if (j == maxit)
+        {
+            samples = samples[1:maxit, ]
+            break
+        }
+        done = TRUE
+        temp = mcse.mat(samples)
+        est = temp[, 1]
+        mcse = temp[, 2]
+        cv = mcse / abs(est)
+        if (any(cv > tol))
+            done = FALSE
+        if (done)
+            break
+        else
+        {
+            start = start + iterations
+            temp = matrix(0, iterations, m + 2)
+            samples = rbind(samples, temp)
+        }
+    }
+	cat("\n")
+	flush.console()
+    samples[, 1:m] = apply(as.matrix(samples[, 1:m]), 2, function(x) { exp(x) / (1 + exp(x)) })
+    n = nrow(samples)
+    if (n %% 2 == 1)
+        samples = samples[1:(n - 1), ]
+    samples
+}
+
+
+sklars.omega.bayes.t = function(y, R, verbose, control)
+{
+    minit = control$minit
+    maxit = control$maxit
+    tol = control$tol
+    m = length(unique(R[R != 0 & R != 1]))
+    vals = sort(unique(R[R != 0 & R != 1]))
+    R.old = R
+    init = c(median(abs(y - median(y))), median(y))
+    cnames = c("nu", "mu")
+    iterations = minit
+    samples = matrix(0, iterations + 1, m + 2)
+    samples[1, ] = c(rep(0, m), init)
+    colnames(samples)[(m + 1):(m + 2)] = cnames
+    R.new = R.old
+    sigma.1 = control$sigma.1
+    sigma.2 = control$sigma.2
+    sigma.omega = control$sigma.omega
+    alpha = beta = 0.01
+	tau = 1000
+    start = 1
+    i = 1
+    if (verbose)
+    {
+        pb = pbapply::startpb(0, maxit)
+        on.exit(pbapply::closepb(pb))
+        cat("\n")
+        flush.console()
+    }
+    repeat
+    {
+        for (j in (start + 1):(start + iterations))
+        {
+            if (verbose)
+                pbapply::setpb(pb, i)
+            i = i + 1
+            nu = samples[j - 1, m + 1]
+            mu = samples[j - 1, m + 2]
+            eta = samples[j - 1, 1:m]
+            omega = exp(eta) / (1 + exp(eta))
+            for (k in 1:m)
+                R.old[R == vals[k]] = omega[k]
+            nu_ = exp(log(nu) + rnorm(1, sd = sigma.1))
+            log.epsilon = quadratic.form(y, R.old, pt, nu_, mu) - quadratic.form(y, R.old, pt, nu, mu)
+            log.epsilon = log.epsilon + sum(dt(y, nu_, mu, log = TRUE)) - sum(dt(y, nu, mu, log = TRUE))
+            log.epsilon = log.epsilon + (alpha - 1) * (log(nu_) - log(nu)) + beta * (nu - nu_)
+            log.epsilon = log.epsilon + dlnorm(nu, log(nu_), sigma.1, log = TRUE) - dlnorm(nu_, log(nu), sigma.1, log = TRUE)
+            samples[j, m + 1] = ifelse(log(runif(1)) < log.epsilon, nu_, nu)
+            nu = samples[j, m + 1]
+            mu_ = mu + rnorm(1, sd = sigma.2)
+            log.epsilon = quadratic.form(y, R.old, pt, nu, mu_) - quadratic.form(y, R.old, pt, nu, mu)
+            log.epsilon = log.epsilon + sum(dt(y, nu, mu_, log = TRUE)) - sum(dt(y, nu, mu, log = TRUE))
+            log.epsilon = log.epsilon - 0.5 * (mu_^2 - mu^2) / tau^2
+            samples[j, m + 2] = ifelse(log(runif(1)) < log.epsilon, mu_, mu)
+            mu = samples[j, m + 2]
+            eta_ = eta + rnorm(m, sd = sigma.omega)
+            omega_ = exp(eta_) / (1 + exp(eta_))
+            for (k in 1:m)
+                R.new[R == vals[k]] = omega_[k]
+            log.epsilon = quadratic.form(y, R.new, pt, nu, mu) - quadratic.form(y, R.old, pt, nu, mu)
+            log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
+            log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
+            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (j == maxit)
+                break
+        }
+        if (j == maxit)
+        {
+            samples = samples[1:maxit, ]
+            break
+        }
+        done = TRUE
+        temp = mcse.mat(samples)
+        est = temp[, 1]
+        mcse = temp[, 2]
+        cv = mcse / abs(est)
+        if (any(cv > tol))
+            done = FALSE
+        if (done)
+            break
+        else
+        {
+            start = start + iterations
+            temp = matrix(0, iterations, m + 2)
+            samples = rbind(samples, temp)
+        }
+    }
+	cat("\n")
+	flush.console()
+    samples[, 1:m] = apply(as.matrix(samples[, 1:m]), 2, function(x) { exp(x) / (1 + exp(x)) })
+    n = nrow(samples)
+    if (n %% 2 == 1)
+        samples = samples[1:(n - 1), ]
+    samples
+}
+
+
+sklars.omega.bayes.gamma_beta_kumaraswamy = function(y, R, verbose, control)
+{
+    minit = control$minit
+    maxit = control$maxit
+    tol = control$tol
+    m = length(unique(R[R != 0 & R != 1]))
+    vals = sort(unique(R[R != 0 & R != 1]))
+    R.old = R
+    if (control$dist == "gamma")
+    {
+        pfun = pgamma
+        dfun = dgamma
+        temp1 = mean(y)
+        temp2 = var(y)
+        alpha0 = temp1^2 / temp2
+        beta0 = temp1 / temp2
+        init = c(alpha0, beta0)
+        cnames = c("alpha", "beta")
+    }
+    else if (control$dist == "beta")
+    {
+        pfun = pbeta
+        dfun = dbeta
+        temp1 = mean(y)
+        temp2 = var(y)
+        alpha0 = temp1 * ((temp1 * (1 - temp1)) / temp2 - 1)
+        beta0 = (1 - temp1) * ((temp1 * (1 - temp1)) / temp2 - 1)
+        init = c(alpha0, beta0)
+        cnames = c("alpha", "beta")
+    }
+    else
+    {
+        pfun = pkumar
+        dfun = dkumar
+        init = c(1, 1)
+        cnames = c("a", "b")
+    }
+    iterations = minit
+    samples = matrix(0, iterations + 1, m + 2)
+    samples[1, ] = c(rep(0, m), init)
+    colnames(samples)[(m + 1):(m + 2)] = cnames
+    R.new = R.old
+    sigma.1 = control$sigma.1
+    sigma.2 = control$sigma.2
+    sigma.omega = control$sigma.omega
+    alpha = beta = gamma = delta = 0.01
+    start = 1
+    i = 1
+    if (verbose)
+    {
+        pb = pbapply::startpb(0, maxit)
+        on.exit(pbapply::closepb(pb))
+        cat("\n")
+        flush.console()
+    }
+    repeat
+    {
+        for (j in (start + 1):(start + iterations))
+        {
+            if (verbose)
+                pbapply::setpb(pb, i)
+            i = i + 1
+            param1 = samples[j - 1, m + 1]
+            param2 = samples[j - 1, m + 2]
+            eta = samples[j - 1, 1:m]
+            omega = exp(eta) / (1 + exp(eta))
+            for (k in 1:m)
+                R.old[R == vals[k]] = omega[k]
+            param1_ = exp(log(param1) + rnorm(1, sd = sigma.1))
+            log.epsilon = quadratic.form(y, R.old, pfun, param1_, param2) - quadratic.form(y, R.old, pfun, param1, param2)
+            log.epsilon = log.epsilon + sum(dfun(y, param1_, param2, log = TRUE)) - sum(dfun(y, param1, param2, log = TRUE))
+            log.epsilon = log.epsilon + (alpha - 1) * (log(param1_) - log(param1)) + beta * (param1 - param1_)
+            log.epsilon = log.epsilon + dlnorm(param1, log(param1_), sigma.1, log = TRUE) - dlnorm(param1_, log(param1), sigma.1, log = TRUE)
+            samples[j, m + 1] = ifelse(log(runif(1)) < log.epsilon, param1_, param1)
+            param1 = samples[j, m + 1]
+            param2_ = exp(log(param2) + rnorm(1, sd = sigma.2))
+            log.epsilon = quadratic.form(y, R.old, pfun, param1, param2_) - quadratic.form(y, R.old, pfun, param1, param2)
+            log.epsilon = log.epsilon + sum(dfun(y, param1, param2_, log = TRUE)) - sum(dfun(y, param1, param2, log = TRUE))
+            log.epsilon = log.epsilon + (delta - 1) * (log(param2_) - log(param2)) + gamma * (param2 - param2_)
+            log.epsilon = log.epsilon + dlnorm(param2, log(param2_), sigma.2, log = TRUE) - dlnorm(param2_, log(param2), sigma.2, log = TRUE)
+            samples[j, m + 2] = ifelse(log(runif(1)) < log.epsilon, param2_, param2)
+            param2 = samples[j, m + 2]
+            eta_ = eta + rnorm(m, sd = sigma.omega)
+            omega_ = exp(eta_) / (1 + exp(eta_))
+            for (k in 1:m)
+                R.new[R == vals[k]] = omega_[k]
+            log.epsilon = quadratic.form(y, R.new, pfun, param1, param2) - quadratic.form(y, R.old, pfun, param1, param2)
+            log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
+            log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
+            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (j == maxit)
+                break
+        }
+        if (j == maxit)
+        {
+            samples = samples[1:maxit, ]
+            break
+        }
+        done = TRUE
+        temp = mcse.mat(samples)
+        est = temp[, 1]
+        mcse = temp[, 2]
+        cv = mcse / abs(est)
+        if (any(cv > tol))
+            done = FALSE
+        if (done)
+            break
+        else
+        {
+            start = start + iterations
+            temp = matrix(0, iterations, m + 2)
+            samples = rbind(samples, temp)
+        }
+    }
+	cat("\n")
+	flush.console()
+    samples[, 1:m] = apply(as.matrix(samples[, 1:m]), 2, function(x) { exp(x) / (1 + exp(x)) })
+    n = nrow(samples)
+    if (n %% 2 == 1)
+        samples = samples[1:(n - 1), ]
+    samples
+}
+
+
+DIC = function(samples, theta.hat, y, R, dist)
+{
+    D.theta = 2 * objective.ML(theta.hat, y, R, dist)
+    D.bar = 0
+    for (j in 1:nrow(samples))
+        D.bar = D.bar + 2 * objective.ML(samples[j, ], y, R, dist)
+    D.bar = D.bar / nrow(samples)
+    DIC = 2 * D.bar - D.theta
+    DIC
+}
+
+
+#' Do Bayesian inference for Sklar's Omega.
+#'
+#' @details This function does MCMC for Bayesian inference for interval or ratio scores.
+#'
+#' Control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, and \code{"gamma"} (for interval scores), or from among \code{"beta"} or \code{"kumaraswamy"} (for ratio scores).
+#'
+#' Details regarding prior distributions and sampling are provided in the second package vignette.
+#'
+#' @param data a matrix of scores. Each row corresponds to a unit, each column a coder. The columns must be named appropriately so that the correct copula correlation matrix can be constructed. See \code{\link{build.R}} for details regarding column naming.
+#' @param level the level of measurement, either \code{"interval"} or \code{"ratio"}.
+#' @param verbose logical; if TRUE, various messages are printed to the console.
+#' @param control a list of control parameters.
+#'    \describe{
+#'        \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, or \code{"gamma"}; when \code{level = "ratio"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
+#'        \item{minit}{the minimum sample size. This should be large enough to permit accurate estimation of Monte Carlo standard errors. The default is 1,000.}
+#'        \item{maxit}{the maximum sample size. Sampling from the posterior terminates when all estimated coefficients of variation are smaller than \code{tol} or when \code{maxit} samples have been drawn, whichever happens first. The default is 10,000.}
+#'        \item{sigma.1}{the proposal standard deviation for the first marginal parameter. Defaults to 0.1.}
+#'        \item{sigma.2}{the proposal standard deviation for the second marginal parameter. Defaults to 0.1.}
+#'        \item{sigma.omega}{a vector of proposal standard deviations for the parameters of the copula correlation matrix. These default to 0.1.}
+#'        \item{tol}{a tolerance. If all estimated coefficients of variation are smaller than \code{tol}, no more samples are drawn from the posterior. The default value is 0.1.}
+#' }
+#'
+#' @return Function \code{sklars.omega.bayes} returns an object of class \code{"sklarsomega"}, which is a list comprising the following elements.
+#'         \item{accept}{a vector of acceptance rates.}
+#'         \item{DIC}{the value of DIC for the fit.}
+#'         \item{call}{the matched call.}
+#'         \item{coefficients}{a named vector of parameter estimates.}
+#'         \item{control}{the list of control parameters.}
+#'         \item{data}{the matrix of scores, perhaps altered to remove rows (units) containing fewer than two scores.}
+#'         \item{iter}{the number of posterior samples that were drawn.}
+#'         \item{level}{the level of measurement.}
+#'         \item{mcse}{a vector of Monte Carlo standard errors.}
+#'         \item{method}{always equal to \code{"Bayesian"} for this function.}
+#'         \item{mpar}{the number of marginal parameters.}
+#'         \item{npar}{the total number of parameters.}
+#'         \item{R}{the initial value of the copula correlation matrix.}
+#'         \item{R.hat}{the estimated value of the copula correlation matrix.}
+#'         \item{residuals}{the residuals.}
+#'         \item{root.R.hat}{a square root of the estimated copula correlation matrix. This is used for simulation and to compute the residuals.}
+#'         \item{samples}{the posterior samples.}
+#'         \item{verbose}{the value of argument \code{verbose}.}
+#'         \item{y}{the scores as a vector, perhaps altered to remove rows (units) containing fewer than two scores.}
+#'
+#' @references
+#' Hughes, J. (2018). Sklar's Omega: A Gaussian copula-based framework for assessing agreement. \emph{ArXiv e-prints}, March.
+#' @references
+#' Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
+#'
+#' @export
+#'
+#' @examples
+#' \donttest{
+#' # Fit a subset of the cartilage data, assuming a Laplace marginal distribution. Compute
+#' # 95% HPD intervals. Show the acceptance rates for the three parameters.
+#'
+#' data(cartilage)
+#' data = as.matrix(cartilage)[1:100, ]
+#' colnames(data) = c("c.1.1", "c.2.1")
+#' set.seed(111111)
+#' fit1 = sklars.omega.bayes(data, verbose = FALSE,
+#'                           control = list(dist = "laplace", minit = 1000, maxit = 5000, tol = 0.01,
+#'                                          sigma.1 = 1, sigma.2 = 0.1, sigma.omega = 0.2))
+#' summary(fit1)
+#' fit1$accept
+#'
+#' # Now assume a t marginal distribution.
+#'
+#' set.seed(4565)
+#' fit2 = sklars.omega.bayes(data, verbose = FALSE,
+#'                           control = list(dist = "t", minit = 1000, maxit = 5000, tol = 0.01,
+#'                                          sigma.1 = 0.2, sigma.2 = 2, sigma.omega = 0.2))
+#' summary(fit2)
+#' fit2$accept
+#' }
+
+sklars.omega.bayes = function(data, level = c("interval", "ratio"), verbose = FALSE, control = list())
+{
+    call = match.call()
+    cnames = check.colnames(data)
+    if (missing(data) || ! is.matrix(data) || ! is.numeric(data))
+        stop("You must supply a numeric data matrix.")
+    if (! cnames$success)
+        stop("Your data matrix must have appropriately named columns. Check column(s) ", paste(cnames$cols, collapse = ", "), ".")
+    level = match.arg(level)
+    if (! is.logical(verbose) || length(verbose) > 1)
+        stop("'verbose' must be a logical value.")
+    if (! is.list(control))
+        stop("'control' must be a list.")
+    temp = build.R(data)
+    R = temp$R
+    onames = temp$onames
+    rm(temp)
+    m = length(unique(R[R != 0 & R != 1]))
+    control = sklarsomega.control.bayes(level, verbose, control, m)
+    block.sizes = apply(data, 1, function(row) { sum(! is.na(row)) })
+    data = data[block.sizes > 1, ]
+    y = as.vector(t(data))
+    y = y[! is.na(y)]
+    result = list()
+    class(result) = "sklarsomega"
+	if (control$dist == "t")
+	    samples = sklars.omega.bayes.t(y, R, verbose, control)
+	else if (control$dist %in% c("gamma", "beta", "kumaraswamy"))
+        samples = sklars.omega.bayes.gamma_beta_kumaraswamy(y, R, verbose, control)
+	else
+		samples = sklars.omega.bayes.gaussian_laplace(y, R, verbose, control)
+    colnames(samples)[1:m] = onames
+    npar = m + 2
+    result$level = level
+    result$verbose = verbose
+    result$npar = npar
+    temp = mcse.mat(samples)
+    result$coefficients = temp[, 1]
+    result$mcse = temp[, 2]
+    names(result$coefficients) = colnames(samples)
+    result$accept = apply(samples, 2, function(col) { mean(diff(col) != 0) })
+    result$mpar = 2
+    result$R = R
+    vals = sort(unique(R[R != 0 & R != 1]))
+    result$R.hat = R
+    for (j in 1:m)
+        result$R.hat[result$R == vals[j]] = result$coefficients[j]
+    temp = svd(result$R.hat)
+    result$root.R.hat = temp$u %*% diag(sqrt(temp$d), nrow(result$R))
+    rm(temp)
+    result$iter = nrow(samples)    
+    result$DIC = DIC(samples, result$coef, y, R, control$dist)
+    result$data = data
+    result$y = y
+    rest = result$coefficients[(m + 1):npar]
+    u = switch(control$dist,
+               gaussian = pnorm(y, mean = rest[1], sd = rest[2]),
+               laplace = plaplace(y, location = rest[1], scale = rest[2]),
+               t = pt(y, df = rest[1], ncp = rest[2]),
+               beta = pbeta(y, shape1 = rest[1], shape2 = rest[2]),
+               gamma = pgamma(y, shape = rest[1], rate = rest[2]),
+               kumaraswamy = pkumar(y, a = rest[1], b = rest[2]))
+    z = qnorm(u)
+    z = ifelse(z == -Inf, qnorm(0.0001), z)
+    z = ifelse(z == Inf, qnorm(0.9999), z)
+    residuals = try(solve(result$root.R.hat) %*% z, silent = TRUE)
+    if (! inherits(residuals, "try-error"))
+        result$residuals = as.vector(residuals)
+    result$method = "Bayesian"
+    result$call = call
+    result$control = control
+    result$samples = samples
+    result
+}
+
+
+hpd = function(x, alpha = 0.05)
+{
+    n = length(x)
+    m = round(n * alpha)
+    x = sort(x)
+    y = x[(n - m + 1):n] - x[1:m]
+    z = min(y)
+    k = which(y == z)[1]
+    c(x[k], x[n - m + k])
 }
 
 
@@ -963,19 +1558,24 @@ summary.sklarsomega = function(object, alpha = 0.05, digits = 4, ...)
 {
     cat("\nCall:\n\n")
     print(object$call)
-    cat("\nConvergence:\n")
-    if (is.null(object$convergence))
+    if (object$method != "Bayesian")
     {
-        cat("\nOptimization failed.\n")
-        return(invisible())
-    }
-    else if (object$convergence != 0)
-    {
-        cat("\nOptimization failed =>", object$message, "\n")
-        return(invisible())
+        cat("\nConvergence:\n")
+        if (is.null(object$convergence))
+        {
+            cat("\nOptimization failed.\n")
+            return(invisible())
+        }
+        else if (object$convergence != 0)
+        {
+            cat("\nOptimization failed =>", object$message, "\n")
+            return(invisible())
+        }
+        else
+            cat("\nOptimization converged at", signif(-object$value, digits = digits), "after", object$iter, "iterations.\n")
     }
     else
-        cat("\nOptimization converged at", signif(-object$value, digits = digits), "after", object$iter, "iterations.\n")
+        cat("\nNumber of posterior samples:", object$iter, "\n")
     cat("\nControl parameters:\n")
     if (length(object$control) > 0)
     {
@@ -986,39 +1586,50 @@ summary.sklarsomega = function(object, alpha = 0.05, digits = 4, ...)
     else
         print("\nNone specified.\n")
     npar = object$npar
-    if (object$confint == "none")
-        confint = matrix(rep(NA, 2 * npar), ncol = 2)
-    else
+    if (object$method != "Bayesian")
     {
-        boot.sample = object$boot.sample
-        if (! is.null(boot.sample))
-        {
-            se = apply(boot.sample, 2, sd)
-            scale = qnorm(1 - alpha / 2)
-            coef = object$coef
-            confint = cbind(coef - scale * se, coef + scale * se)
-        }
+        if (object$confint == "none")
+            confint = matrix(rep(NA, 2 * npar), ncol = 2)
         else
         {
-            cov.hat = object$cov.hat
-            if (! is.null(cov.hat))
+            boot.sample = object$boot.sample
+            if (! is.null(boot.sample))
             {
-                se = sqrt(diag(cov.hat))
+                se = apply(boot.sample, 2, sd)
                 scale = qnorm(1 - alpha / 2)
                 coef = object$coef
                 confint = cbind(coef - scale * se, coef + scale * se)
             }
             else
-                confint = matrix(rep(NA, 2 * npar), ncol = 2)
+            {
+                cov.hat = object$cov.hat
+                if (! is.null(cov.hat))
+                {
+                    se = sqrt(diag(cov.hat))
+                    scale = qnorm(1 - alpha / 2)
+                    coef = object$coef
+                    confint = cbind(coef - scale * se, coef + scale * se)
+                }
+                else
+                    confint = matrix(rep(NA, 2 * npar), ncol = 2)
+            }
         }
+        coef.table = cbind(object$coef, confint)
+        colnames(coef.table) = c("Estimate", "Lower", "Upper")
     }
-    coef.table = cbind(object$coef, confint)
-    colnames(coef.table) = c("Estimate", "Lower", "Upper")
+    else
+    {
+        confint = t(apply(object$samples, 2, hpd, alpha = alpha))
+        coef.table = cbind(object$coef, confint, object$mcse)
+        colnames(coef.table) = c("Estimate", "Lower", "Upper", "MCSE")
+    }
     rownames(coef.table) = names(object$coef)
     cat("Coefficients:\n\n")
     print(signif(coef.table, digits = digits))
     if (! is.null(object$AIC))
         cat("\nAIC:", signif(object$AIC, digits), "\nBIC:", signif(object$BIC, digits), "\n")
+    if (object$method == "Bayesian")
+        cat("\nDIC:", signif(object$DIC, digits), "\n")
     cat("\n")
 }
 
@@ -1092,14 +1703,19 @@ residuals.sklarsomega = function(object, ...)
 
 vcov.sklarsomega = function(object, ...)
 {
-    if (is.null(object$confint))
-        stop("Fit object does not contain field 'confint'\n.")
-    if (object$confint == "none")
-        stop("Function sklars.omega was called with 'confint' equal to \"none\".")
-    if (! is.null(object$cov.hat))
-        cov.hat = object$cov.hat
+    if (object$method != "Bayesian")
+    {
+        if (is.null(object$confint))
+            stop("Fit object does not contain field 'confint'\n.")
+        if (object$confint == "none")
+            stop("Function sklars.omega was called with 'confint' equal to \"none\".")
+        if (! is.null(object$cov.hat))
+            cov.hat = object$cov.hat
+        else
+            cov.hat = cov(object$boot.sample, use = "complete.obs")
+    }
     else
-        cov.hat = cov(object$boot.sample, use = "complete.obs")
+        cov.hat = cov(object$samples)
     rownames(cov.hat) = colnames(cov.hat) = names(object$coef)
     cov.hat
 }
@@ -1134,7 +1750,7 @@ vcov.sklarsomega = function(object, ...)
 #' # Simulate three datasets from the fitted model, and then
 #' # display the first dataset in matrix form.
 #'
-#' sim = simulate(fit, nsim = 3, seed = 12)
+#' sim = simulate(fit, nsim = 3, seed = 42)
 #' data.sim = t(fit$data)
 #' data.sim[! is.na(data.sim)] = sim[, 1]
 #' data.sim = t(data.sim)
@@ -1160,6 +1776,7 @@ simulate.sklarsomega = function(object, nsim = 1, seed = NULL, ...)
                    t = qt(u, df = psi[1], ncp = psi[2]),
                    beta = qbeta(u, shape1 = psi[1], shape2 = psi[2]),
                    gamma = qgamma(u, shape = psi[1], rate = psi[2]),
+                   kumaraswamy = qkumar(u, a = psi[1], b = psi[2]),
                    empirical = quantile(object$y, u, type = 8),
                    categorical = sklarsomega::qcat(u, p = psi))
         if (object$control$dist != "categorical" ||
@@ -1266,11 +1883,19 @@ influence.sklarsomega = function(model, units, coders, ...)
         k = 1
         for (j in units)
         {
-            fit = try(suppressWarnings(sklars.omega(model$data[-j, ], level = model$level, confint = "none", control = model$control)), silent = TRUE)
-            if (inherits(fit, "try-error") || fit$convergence != 0)
-                warning(fit$message)
-            else
-                dfbeta.units[k, ] = model$coef - fit$coef
+			if (model$method != "Bayesian")
+			{
+                fit = try(suppressWarnings(sklars.omega(model$data[-j, ], level = model$level, confint = "none", control = model$control)), silent = TRUE)
+                if (inherits(fit, "try-error") || fit$convergence != 0)
+                    warning(fit$message)
+                else
+                    dfbeta.units[k, ] = model$coef - fit$coef
+			}
+			else
+			{
+			    fit = sklars.omega.bayes(model$data[-j, ], level = model$level, control = model$control)
+			    dfbeta.units[k, ] = model$coef - fit$coef
+			}
             k = k + 1
         }
         colnames(dfbeta.units) = names(model$coef)
@@ -1283,11 +1908,19 @@ influence.sklarsomega = function(model, units, coders, ...)
         k = 1
         for (j in coders)
         {
-            fit = try(suppressWarnings(sklars.omega(model$data[, -j], level = model$level, confint = "none", control = model$control)), silent = TRUE)
-            if (inherits(fit, "try-error") || fit$convergence != 0)
-                warning(fit$message)
-            else
-                dfbeta.coders[k, ] = model$coef - fit$coef
+			if (model$method != "Bayesian")
+			{
+                fit = try(suppressWarnings(sklars.omega(model$data[, -j], level = model$level, confint = "none", control = model$control)), silent = TRUE)
+                if (inherits(fit, "try-error") || fit$convergence != 0)
+                    warning(fit$message)
+                else
+                    dfbeta.coders[k, ] = model$coef - fit$coef
+			}
+			else
+			{
+			    fit = sklars.omega.bayes(model$data[, -j], level = model$level, control = model$control)
+			    dfbeta.coders[k, ] = model$coef - fit$coef
+			}
             k = k + 1
         }
         colnames(dfbeta.coders) = names(model$coef)

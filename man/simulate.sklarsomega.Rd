@@ -38,7 +38,7 @@ summary(fit)
 # Simulate three datasets from the fitted model, and then
 # display the first dataset in matrix form.
 
-sim = simulate(fit, nsim = 3, seed = 12)
+sim = simulate(fit, nsim = 3, seed = 42)
 data.sim = t(fit$data)
 data.sim[! is.na(data.sim)] = sim[, 1]
 data.sim = t(data.sim)

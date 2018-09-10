@@ -20,7 +20,7 @@ sklars.omega(data, level = c("nominal", "ordinal", "interval", "ratio"),
 \item{control}{a list of control parameters.
    \describe{
        \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"}, or when \code{confint = "asymptotic"} and \code{level = "nominal"} or \code{level = "ordinal"}. Defaults to 1,000.}
-       \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, or \code{"empirical"}.}
+       \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, or \code{"empirical"}; when \code{level = "ratio"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
        \item{nodes}{the desired number of nodes in the cluster.}
        \item{parallel}{logical; if TRUE (the default), bootstrapping is done in parallel.}
        \item{type}{one of the supported cluster types for \code{\link[parallel]{makeCluster}}. Defaults to \code{"SOCK"}.}
@@ -28,8 +28,8 @@ sklars.omega(data, level = c("nominal", "ordinal", "interval", "ratio"),
 }
 \value{
 Function \code{sklars.omega} returns an object of class \code{"sklarsomega"}, which is a list comprising the following elements.
-        \item{AIC}{the value of AIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}.}
-        \item{BIC}{the value of BIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}.}
+        \item{AIC}{the value of AIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
+        \item{BIC}{the value of BIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
         \item{boot.sample}{when applicable, the bootstrap sample.}
         \item{call}{the matched call.}
         \item{coefficients}{a named vector of parameter estimates.}
@@ -40,7 +40,7 @@ Function \code{sklars.omega} returns an object of class \code{"sklarsomega"}, wh
         \item{data}{the matrix of scores, perhaps altered to remove rows (units) containing fewer than two scores.}
         \item{iter}{if optimization converged, the value of \code{iter} returned by \code{\link{optim}}.}
         \item{level}{the level of measurement.}
-        \item{message}{the value of \code{massage} returned by \code{\link{optim}}.}
+        \item{message}{the value of \code{message} returned by \code{\link{optim}}.}
         \item{method}{the approach to inference, one of \code{"CML"}, \code{"DT"}, \code{"ML"}, or \code{"SMP"} (semiparametric).}
         \item{mpar}{the number of marginal parameters.}
         \item{npar}{the total number of parameters.}
@@ -60,11 +60,9 @@ This is the package's flagship function. It applies the Sklar's Omega methodolog
 
 If the level of measurement is nominal or ordinal, the scores (which must take values in \eqn{1, \dots , K}) are assumed to share a common categorical marginal distribution. If \eqn{K} is less than 5, a composite marginal likelihood (CML) approach is used. If \eqn{K} is greater than or equal to 5, the distributional transform (DT) approximation is used. In either case, two types of confidence interval are available: bootstrap or asymptotic. See the package vignette for details.
 
-If the level of measurement is ratio, the scores are assumed to share a common beta distribution, and the method of maximum likelihood (ML) is used. Both bootstrap and asymptotic confidence intervals are available.
+If the level of measurement is interval or ratio, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, and \code{"empirical"}, or from among \code{"beta"} or \code{"kumaraswamy"}, respectively. The ML method is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
 
-If the level of measurement is interval, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, and \code{"empirical"}. The ML method is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
-
-Appropriate sample quantities are used as starting values for all marginal parameters, regardless of the level of measurement. Details are provided in the package vignette.
+When applicable, functions of appropriate sample quantities are used as starting values for marginal parameters, regardless of the level of measurement. Details are provided in the package vignettes.
 }
 \examples{
 \donttest{
@@ -84,6 +82,7 @@ data
 # all but one of the available cores. Since we set 'verbose' equal to TRUE, a
 # progress bar is displayed during the bootstrap.
 
+set.seed(12)
 fit = sklars.omega(data, level = "nominal", confint = "asymptotic", verbose = TRUE,
                    control = list(bootit = 1000, parallel = TRUE,
                    nodes = parallel::detectCores() - 1))
@@ -109,8 +108,6 @@ vcov(fit)
 }
 \references{
 Hughes, J. (2018). Sklar's Omega: A Gaussian copula-based framework for assessing agreement. \emph{ArXiv e-prints}, March.
-
-Krippendorff, K. (2013). Computing Krippendorff's alpha-reliability. Technical report, University of Pennsylvania.
 
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 }
