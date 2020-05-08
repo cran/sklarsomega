@@ -1,8 +1,8 @@
-113ad569b6f6a3767ed74cc2e84ca966 *COPYING
-d79c05ed286f9812cf7a6df297ae83a0 *DESCRIPTION
+cad75ef2720d0ae96be3fc28f3a5b03c *COPYING
+47a82b86a82ac7579fd57681c29c5de1 *DESCRIPTION
 e7e2e85e5561452e04b592ecfb0d5e4c *NAMESPACE
-968b2af87b777eaff5db926e3dd8e6e5 *R/sklarsomega.R
-ac2ae36a68287f328310bf08ab3ffadd *R/zzz.R
+e49b4119f8451fd03537f4df72f9831b *R/sklarsomega.R
+82147e3ae9052658fe5e371027fe1deb *R/zzz.R
 56f471a2f7ac7a1f1b0f1281c626032e *data/cartilage.rda
 3bdb51aa441b83b9cedeb8717db6e6b2 *inst/doc/Sklars_Omega.pdf
 c375ee3cdbca03df5cc4d6ed972fef40 *inst/doc/sklarsomega_arXiv.pdf

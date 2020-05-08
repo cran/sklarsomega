@@ -1,10 +1,10 @@
 Package: sklarsomega
 Type: Package
 Title: Measuring Agreement Using Sklar's Omega Coefficient
-Version: 2.0
-Date: 2018-09-10
-Author: John Hughes <jphughesjr@gmail.com>
-Maintainer: John Hughes <jphughesjr@gmail.com>
+Version: 2.0-1
+Date: 2020-05-07
+Author: John Hughes <drjphughesjr@gmail.com>
+Maintainer: John Hughes <drjphughesjr@gmail.com>
 Imports: extraDistr, hash, LaplacesDemon, Matrix, mcmcse, numDeriv,
         spam
 Suggests: lattice, parallel, pbapply
@@ -17,6 +17,6 @@ Description: Provides tools for applying Sklar's Omega (Hughes, 2018) <arXiv:180
 License: GPL (>= 2)
 RoxygenNote: 5.0.1
 NeedsCompilation: yes
-Packaged: 2018-09-10 21:17:05 UTC; jphughesjr
+Packaged: 2020-05-07 17:39:52 UTC; jphughesjr
 Repository: CRAN
-Date/Publication: 2018-09-10 21:50:03 UTC
+Date/Publication: 2020-05-08 08:40:06 UTC

@@ -1006,14 +1006,14 @@ sklarsomega.control.bayes = function(level, verbose, control, m)
 quadratic.form = function(y, R, pfun, param1, param2)
 {
     Q = try(solve.spam(as.spam(R)), silent = TRUE)
-    if (class(Q) == "try-error")
+    if (any(class(Q) == "try-error"))
         return(1e6)
     u = pfun(y, param1, param2)
     z = qnorm(u)
     z = ifelse(z == -Inf, qnorm(0.0001), z)
     z = ifelse(z == Inf, qnorm(0.9999), z)
     f = try(-0.5 * (t(z) %*% Q %*% z - sum(z^2)))
-    if (class(f) == "try-error")
+    if (any(class(f) == "try-error"))
         return(1e6)
     f
 }
