@@ -4,23 +4,27 @@
 \alias{sklars.omega}
 \title{Apply Sklar's Omega.}
 \usage{
-sklars.omega(data, level = c("nominal", "ordinal", "interval", "ratio"),
-  confint = c("none", "bootstrap", "asymptotic"), verbose = FALSE,
-  control = list())
+sklars.omega(
+  data,
+  level = c("nominal", "ordinal", "count", "percentage", "amount", "balance"),
+  confint = c("none", "bootstrap", "asymptotic"),
+  verbose = FALSE,
+  control = list()
+)
 }
 \arguments{
 \item{data}{a matrix of scores. Each row corresponds to a unit, each column a coder. The columns must be named appropriately so that the correct copula correlation matrix can be constructed. See \code{\link{build.R}} for details regarding column naming.}
 
-\item{level}{the level of measurement, one of \code{"nominal"}, \code{"ordinal"}, \code{"interval"}, or \code{"ratio"}.}
+\item{level}{the level of measurement, one of \code{"nominal"}, \code{"ordinal"}, \code{"count"}, \code{"amount"}, \code{"balance"}, or \code{"percentage"}.}
 
 \item{confint}{the method for computing confidence intervals, one of \code{"none"}, \code{"bootstrap"}, or \code{"asymptotic"}.}
 
-\item{verbose}{logical; if TRUE, various messages are printed to the console.}
+\item{verbose}{logical; if TRUE, various messages may be printed to the console.}
 
 \item{control}{a list of control parameters.
    \describe{
-       \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"}, or when \code{confint = "asymptotic"} and \code{level = "nominal"} or \code{level = "ordinal"}. Defaults to 1,000.}
-       \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, or \code{"empirical"}; when \code{level = "ratio"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
+       \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"} or when \code{confint = "asymptotic"} and \code{level = "count"}. Defaults to 1,000.}
+       \item{dist}{when \code{level = "balance"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, or \code{"empirical"}; when \code{level = "amount"}, one of \code{"gamma"} or \code{"empirical"}; when \code{level = "percentage"}, one of \code{"beta"} or \code{"kumaraswamy"}; when \code{level = "count"}, one of \code{"poisson"} or \code{"negbinomial"}.}
        \item{nodes}{the desired number of nodes in the cluster.}
        \item{parallel}{logical; if TRUE (the default), bootstrapping is done in parallel.}
        \item{type}{one of the supported cluster types for \code{\link[parallel]{makeCluster}}. Defaults to \code{"SOCK"}.}
@@ -28,87 +32,64 @@ sklars.omega(data, level = c("nominal", "ordinal", "interval", "ratio"),
 }
 \value{
 Function \code{sklars.omega} returns an object of class \code{"sklarsomega"}, which is a list comprising the following elements.
-        \item{AIC}{the value of AIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
-        \item{BIC}{the value of BIC for the fit, if \code{level = "interval"} and \code{dist != "empirical"}, or if \code{level = "ratio"}.}
+        \item{AIC}{the value of AIC for the fit, if \code{level = "amount"} or \code{level = "balance"} and \code{dist != "empirical"}, or if \code{level = "percentage"}.}
+        \item{BIC}{the value of BIC for the fit, if \code{level = "amount"} or \code{level = "balance"} and \code{dist != "empirical"}, or if \code{level = "percentage"}.}
         \item{boot.sample}{when applicable, the bootstrap sample.}
         \item{call}{the matched call.}
         \item{coefficients}{a named vector of parameter estimates.}
         \item{confint}{the value of argument \code{confint}.}
         \item{control}{the list of control parameters.}
-        \item{convergence}{unless optimization failed, the value of \code{convergence} returned by \code{\link{optim}}.}
+        \item{convergence}{unless optimization failed, the value of \code{convergence} returned by \code{\link{optim}} or \code{\link{hjkb}}.}
         \item{cov.hat}{if \code{confint = "asymptotic"}, the estimate of the covariance matrix of the parameter estimator.}
         \item{data}{the matrix of scores, perhaps altered to remove rows (units) containing fewer than two scores.}
-        \item{iter}{if optimization converged, the value of \code{iter} returned by \code{\link{optim}}.}
+        \item{iter}{if optimization converged, the number of iterations required to optimize the objective function.}
         \item{level}{the level of measurement.}
-        \item{message}{the value of \code{message} returned by \code{\link{optim}}.}
+        \item{message}{if applicable, the value of \code{message} returned by \code{\link{optim}}.}
         \item{method}{the approach to inference, one of \code{"CML"}, \code{"DT"}, \code{"ML"}, or \code{"SMP"} (semiparametric).}
         \item{mpar}{the number of marginal parameters.}
         \item{npar}{the total number of parameters.}
+        \item{optim.method}{the method used to optimize the objective function. The L-BFGS-B method is attempted first. If L-BFGS-B fails, a second attempt is made using the bounded Hooke-Jeeves algorithm.}
         \item{R}{the initial value of the copula correlation matrix.}
         \item{R.hat}{the estimated value of the copula correlation matrix.}
         \item{residuals}{the residuals.}
         \item{root.R.hat}{a square root of the estimated copula correlation matrix. This is used for simulation and to compute the residuals.}
         \item{value}{the minimum of the log objective function.}
         \item{verbose}{the value of argument \code{verbose}.}
-        \item{y}{the scores as a vector, perhaps altered to remove rows (units) containing fewer than two scores.}
+        \item{y}{the scores as a vector, perhaps altered to remove rows (units) containing only one score.}
 }
 \description{
 Apply Sklar's Omega.
 }
 \details{
-This is the package's flagship function. It applies the Sklar's Omega methodology to nominal, ordinal, interval, or ratio outcomes, and, if desired, produces confidence intervals. Parallel computing is supported, when applicable, and other measures (e.g., sparse matrix operations) are taken in the interest of computational efficiency.
+This is the package's flagship function. It applies the Sklar's Omega methodology to nominal, ordinal, count, amount, balance, or percentage outcomes, and, if desired, produces confidence intervals. Parallel computing is supported, when applicable, and other measures (e.g., sparse matrix operations) are taken in the interest of computational efficiency.
 
-If the level of measurement is nominal or ordinal, the scores (which must take values in \eqn{1, \dots , K}) are assumed to share a common categorical marginal distribution. If \eqn{K} is less than 5, a composite marginal likelihood (CML) approach is used. If \eqn{K} is greater than or equal to 5, the distributional transform (DT) approximation is used. In either case, two types of confidence interval are available: bootstrap or asymptotic. See the package vignette for details.
+If the level of measurement is nominal or ordinal, the scores (which must take values in \eqn{1, \dots , K}) are assumed to share a common categorical marginal distribution. A composite marginal likelihood (CML) approach is used for categorical scores. Only parametric bootstrap intervals are supported for categorical outcomes since sandwich estimation tends to lead to inflated standard errors.
 
-If the level of measurement is interval or ratio, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, \code{"gamma"}, and \code{"empirical"}, or from among \code{"beta"} or \code{"kumaraswamy"}, respectively. The ML method is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
+If the scores are counts, control parameter \code{dist} must be used to select a marginal distribution of \code{"poisson"} or \code{"negbinomial"}. For counts a distributional transform (DT) approximation of the likelihood is employed. Either bootstrap or sandwich intervals are available: \code{confint = "bootstrap"} or \code{confint = "asymptotic"}.
 
-When applicable, functions of appropriate sample quantities are used as starting values for marginal parameters, regardless of the level of measurement. Details are provided in the package vignettes.
+If the level of measurement is balance or amount or percentage, control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, and \code{"empirical"}; or from among \code{"gamma"} and \code{"empirical"}; or from among \code{"beta"} or \code{"kumaraswamy"}, respectively. The method of maximum likelihood (ML) is used unless \code{dist = "empirical"}, in which case conditional maximum likelihood is used, i.e., the copula parameters are estimated conditional on the sample distribution function of the scores. For the ML method, both bootstrap and asymptotic confidence intervals are available. When \code{dist = "empirical"}, only bootstrap intervals are available.
+
+When applicable, functions of appropriate sample quantities are used as starting values for marginal parameters, regardless of the level of measurement.
 }
 \examples{
-\donttest{
-# The following data were presented in Krippendorff (2013).
-
-data = matrix(c(1,2,3,3,2,1,4,1,2,NA,NA,NA,
-                1,2,3,3,2,2,4,1,2,5,NA,3,
-                NA,3,3,3,2,3,4,2,2,5,1,NA,
-                1,2,3,3,2,4,4,1,2,5,1,NA), 12, 4)
-colnames(data) = c("c.1.1", "c.2.1", "c.3.1", "c.4.1")
-data
-
-# Compute asymptotic confidence intervals. Since the distributional transform
-# approximation is used, the asymptotic covariance matrix has a sandwich form.
-# We use a bootstrap estimator of the "filling" (the variance of the score).
-# Obtain a bootstrap sample of size 1,000. Do the bootstrap in parallel, using
-# all but one of the available cores. Since we set 'verbose' equal to TRUE, a
-# progress bar is displayed during the bootstrap.
-
-set.seed(12)
-fit = sklars.omega(data, level = "nominal", confint = "asymptotic", verbose = TRUE,
-                   control = list(bootit = 1000, parallel = TRUE,
-                   nodes = parallel::detectCores() - 1))
-summary(fit)
-}
 # Fit a subset of the cartilage data, assuming a Laplace marginal distribution. Compute
 # confidence intervals in the usual ML way (observed information matrix).
 
 data(cartilage)
-data = as.matrix(cartilage)[1:100, ]
-colnames(data) = c("c.1.1", "c.2.1")
-fit = sklars.omega(data, level = "interval", confint = "asymptotic",
-                   control = list(dist = "laplace"))
-summary(fit)
-vcov(fit)
+data.cart = as.matrix(cartilage)[1:100, ]
+colnames(data.cart) = c("c.1.1", "c.2.1")
+fit.lap = sklars.omega(data.cart, level = "balance", confint = "asymptotic",
+                       control = list(dist = "laplace"))
+summary(fit.lap)
 
-# Now assume a t marginal distribution.
+# Now assume a noncentral t marginal distribution.
 
-fit = sklars.omega(data, level = "interval", confint = "asymptotic",
-                   control = list(dist = "t"))
-summary(fit)
-vcov(fit)
+fit.t = sklars.omega(data.cart, level = "balance", confint = "asymptotic",
+                     control = list(dist = "t"))
+summary(fit.t)
 }
 \references{
 Hughes, J. (2018). Sklar's Omega: A Gaussian copula-based framework for assessing agreement. \emph{ArXiv e-prints}, March.
 
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 }
-

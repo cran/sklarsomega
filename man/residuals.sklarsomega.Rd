@@ -18,19 +18,20 @@ A vector of residuals.
 Extract model residuals.
 }
 \details{
-Although our simulation studies suggest that residuals are not terribly useful in this context, we provide residuals nonetheless. Said residuals are computed by first applying the probability integral transform, then applying the inverse probability integral transform, then pre-multiplying by the inverse of the square root of the (fitted) copula correlation matrix. For nominal or ordinal scores, the distributional transform approximation is used.
+Although residuals may not be terribly useful in this context, we provide residuals nonetheless. Said residuals are computed by first applying the probability integral transform, then applying the inverse probability integral transform, then pre-multiplying by the inverse of the square root of the (fitted) copula correlation matrix. For nominal or ordinal scores, the distributional transform approximation is used.
 }
 \examples{
 # Fit a subset of the cartilage data, assuming a Laplace marginal distribution.
+# Produce a normal probability plot of the residuals, and overlay the line y = x.
 
 data(cartilage)
-data = as.matrix(cartilage)[1:100, ]
-colnames(data) = c("c.1.1", "c.2.1")
-fit = sklars.omega(data, level = "interval", control = list(dist = "laplace"))
-summary(fit)
-res = residuals(fit)
+data.cart = as.matrix(cartilage)[1:100, ]
+colnames(data.cart) = c("c.1.1", "c.2.1")
+fit.lap = sklars.omega(data.cart, level = "balance", control = list(dist = "laplace"))
+summary(fit.lap)
+res = residuals(fit.lap)
 qqnorm(res, pch = 20)
-abline(0, 1, col = "red", lwd = 2)
+abline(0, 1, col = "blue", lwd = 2)
 }
 \references{
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
@@ -38,4 +39,3 @@ Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T
 \seealso{
 \code{\link{sklars.omega}}
 }
-

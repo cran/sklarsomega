@@ -4,19 +4,23 @@
 \alias{sklars.omega.bayes}
 \title{Do Bayesian inference for Sklar's Omega.}
 \usage{
-sklars.omega.bayes(data, level = c("interval", "ratio"), verbose = FALSE,
-  control = list())
+sklars.omega.bayes(
+  data,
+  level = c("amount", "balance", "percentage"),
+  verbose = FALSE,
+  control = list()
+)
 }
 \arguments{
 \item{data}{a matrix of scores. Each row corresponds to a unit, each column a coder. The columns must be named appropriately so that the correct copula correlation matrix can be constructed. See \code{\link{build.R}} for details regarding column naming.}
 
-\item{level}{the level of measurement, either \code{"interval"} or \code{"ratio"}.}
+\item{level}{the level of measurement, either \code{"amount"} or \code{"balance"} or \code{"percentage"}.}
 
 \item{verbose}{logical; if TRUE, various messages are printed to the console.}
 
 \item{control}{a list of control parameters.
    \describe{
-       \item{dist}{when \code{level = "interval"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, or \code{"gamma"}; when \code{level = "ratio"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
+       \item{dist}{when \code{level = "balance"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}; when \code{level = "amount"}, \code{"gamma"}; when \code{level = "percentage"}, one of \code{"beta"} or \code{"kumaraswamy"}.}
        \item{minit}{the minimum sample size. This should be large enough to permit accurate estimation of Monte Carlo standard errors. The default is 1,000.}
        \item{maxit}{the maximum sample size. Sampling from the posterior terminates when all estimated coefficients of variation are smaller than \code{tol} or when \code{maxit} samples have been drawn, whichever happens first. The default is 10,000.}
        \item{sigma.1}{the proposal standard deviation for the first marginal parameter. Defaults to 0.1.}
@@ -51,11 +55,11 @@ Function \code{sklars.omega.bayes} returns an object of class \code{"sklarsomega
 Do Bayesian inference for Sklar's Omega.
 }
 \details{
-This function does MCMC for Bayesian inference for interval or ratio scores.
+This function does MCMC for Bayesian inference for continuous scores.
 
-Control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, and \code{"gamma"} (for interval scores), or from among \code{"beta"} or \code{"kumaraswamy"} (for ratio scores).
+Control parameter \code{dist} must be used to select a marginal distribution from among \code{"gaussian"}, \code{"laplace"}, \code{"t"}, and \code{"gamma"} (for balances or amounts), or from among \code{"beta"} or \code{"kumaraswamy"} (for percentages).
 
-Details regarding prior distributions and sampling are provided in the second package vignette.
+Details regarding prior distributions and sampling are provided in the package vignette.
 }
 \examples{
 \donttest{
@@ -66,16 +70,16 @@ data(cartilage)
 data = as.matrix(cartilage)[1:100, ]
 colnames(data) = c("c.1.1", "c.2.1")
 set.seed(111111)
-fit1 = sklars.omega.bayes(data, verbose = FALSE,
+fit1 = sklars.omega.bayes(data, level = "balance", verbose = FALSE,
                           control = list(dist = "laplace", minit = 1000, maxit = 5000, tol = 0.01,
                                          sigma.1 = 1, sigma.2 = 0.1, sigma.omega = 0.2))
 summary(fit1)
 fit1$accept
 
-# Now assume a t marginal distribution.
+# Now assume a noncentral t marginal distribution.
 
 set.seed(4565)
-fit2 = sklars.omega.bayes(data, verbose = FALSE,
+fit2 = sklars.omega.bayes(data, level = "balance", verbose = FALSE,
                           control = list(dist = "t", minit = 1000, maxit = 5000, tol = 0.01,
                                          sigma.1 = 0.2, sigma.2 = 2, sigma.omega = 0.2))
 summary(fit2)
@@ -87,4 +91,3 @@ Hughes, J. (2018). Sklar's Omega: A Gaussian copula-based framework for assessin
 
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 }
-

@@ -17,27 +17,29 @@
 }
 \value{
 A list comprising at most two elements.
-        \item{dfbeta.units}{a matrix, the columns of which contain DFBETAS for the units specified via argument \code{units}.}
-        \item{dfbeta.coders}{a matrix, the columns of which contain DFBETAS for the coders specified via argument \code{coders}.}
+        \item{dfbeta.units}{a matrix, the columns of which contain DFBETAs for the units specified via argument \code{units}.}
+        \item{dfbeta.coders}{a matrix, the columns of which contain DFBETAs for the coders specified via argument \code{coders}.}
 }
 \description{
 Compute DFBETAs for units and/or coders.
 }
 \details{
-This function computes DFBETAS for one or more units and/or one or more coders.
+This function computes DFBETAs for one or more units and/or one or more coders.
 }
 \examples{
 \donttest{
-# The following data were presented in Krippendorff (2013).
+# The following data were presented in Krippendorff (2013). After
+# analyzing the data and displaying a summary of the fit, compute
+# and display DFBETAs for unit 11 and coders 2 and 3.
 
-data = matrix(c(1,2,3,3,2,1,4,1,2,NA,NA,NA,
-                1,2,3,3,2,2,4,1,2,5,NA,3,
-                NA,3,3,3,2,3,4,2,2,5,1,NA,
-                1,2,3,3,2,4,4,1,2,5,1,NA), 12, 4)
-colnames(data) = c("c.1.1", "c.2.1", "c.3.1", "c.4.1")
-fit = sklars.omega(data, level = "nominal", confint = "none")
-summary(fit)
-(inf = influence(fit, units = c(6, 11), coders = c(2, 3)))
+data.nom = matrix(c(1,2,3,3,2,1,4,1,2,NA,NA,NA,
+                    1,2,3,3,2,2,4,1,2,5,NA,3,
+                    NA,3,3,3,2,3,4,2,2,5,1,NA,
+                    1,2,3,3,2,4,4,1,2,5,1,NA), 12, 4)
+colnames(data.nom) = c("c.1.1", "c.2.1", "c.3.1", "c.4.1")
+fit.nom = sklars.omega(data.nom, level = "nominal", confint = "none")
+summary(fit.nom)
+(inf = influence(fit.nom, units = 11, coders = c(2, 3)))
 }
 }
 \references{
@@ -45,4 +47,3 @@ Young, D. S. (2017). \emph{Handbook of Regression Methods}. CRC Press.
 
 Krippendorff, K. (2013). Computing Krippendorff's alpha-reliability. Technical report, University of Pennsylvania.
 }
-

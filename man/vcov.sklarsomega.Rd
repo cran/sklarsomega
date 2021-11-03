@@ -22,17 +22,19 @@ See the package vignette for detailed information regarding covariance estimatio
 }
 \examples{
 # Fit a subset of the cartilage data, assuming a Laplace marginal distribution. Compute
-# confidence intervals in the usual ML way (observed information matrix).
+# confidence intervals in the usual ML way (observed information matrix). Also display
+# the observed information matrix. Note that using confint = bootstrap leads to bootstrap
+# sampling, in which case vcov returns the sample covariance matrix for the bootstrap
+# sample.
 
 data(cartilage)
-data = as.matrix(cartilage)[1:100, ]
-colnames(data) = c("c.1.1", "c.2.1")
-fit = sklars.omega(data, level = "interval", confint = "asymptotic",
-                   control = list(dist = "laplace"))
-summary(fit)
-vcov(fit)
+data.cart = as.matrix(cartilage)[1:100, ]
+colnames(data.cart) = c("c.1.1", "c.2.1")
+fit.lap = sklars.omega(data.cart, level = "balance", confint = "asymptotic",
+                       control = list(dist = "laplace"))
+summary(fit.lap)
+vcov(fit.lap)
 }
 \references{
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 }
-

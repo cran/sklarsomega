@@ -4,9 +4,20 @@
 \alias{baplot}
 \title{Produce a Bland-Altman plot.}
 \usage{
-baplot(x, y, pch = 20, col = "black", bg = "black", main = "",
-  xlab = "Mean", ylab = "Difference", lwd1 = 1, lwd2 = 1, cex = 1,
-  lcol = "black")
+baplot(
+  x,
+  y,
+  pch = 20,
+  col = "black",
+  bg = "black",
+  main = "",
+  xlab = "Mean",
+  ylab = "Difference",
+  lwd1 = 1,
+  lwd2 = 1,
+  cex = 1,
+  lcol = "black"
+)
 }
 \arguments{
 \item{x}{the first vector of outcomes.}
@@ -40,7 +51,7 @@ Produce a Bland-Altman plot.
 This function produces rather customizable Bland-Altman plots, using the \code{\link{plot}} and \code{\link{abline}} functions. The former is used to create the scatter plot. The latter is used to display the confidence band.
 }
 \examples{
-# Reproduce the plot from Figure 4 of the package vignette.
+# Produce a Bland-Altman plot for the cartilage dataset.
 
 data(cartilage)
 baplot(cartilage$pre, cartilage$post, pch = 21, col = "navy", bg = "darkorange", lwd1 = 2,
@@ -51,4 +62,3 @@ Altman, D. G. and Bland, J. M. (1983). Measurement in medicine: The analysis of 
 
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
 }
-

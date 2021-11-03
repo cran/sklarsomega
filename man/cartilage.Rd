@@ -4,11 +4,11 @@
 \docType{data}
 
 \title{
-Cartilage data described in the package vignette.
+Data from an MRI study of hip cartilage in femoroacetabular impingement.
 }
 
 \description{
-These data are presented and analyzed in Section 3.2 of the vignette.
+This data frame has exactly two columns. The first column contains raw T2* values, the second column contrast-enhanced T2* values.
 }
 
 \usage{data(cartilage)}

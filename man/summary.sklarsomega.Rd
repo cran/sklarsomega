@@ -19,19 +19,19 @@
 Print a summary of a Sklar's Omega fit.
 }
 \details{
-Unless optimization of the objective function failed, this function prints a summary of the fit. First, the value of the objective function at its maximum is displayed, along with the number of iterations required to find the maximum. Then the values of the control parameters (defaults and/or values supplied in the call) are printed. Then a table of estimates is shown. If applicable, the table includes confidence intervals. Finally, the values of \code{\link{AIC}} and BIC are displayed (if the scores were interval and inference was parametric).
+Unless optimization of the objective function failed, this function prints a summary of the fit. First, the value of the objective function at its maximum is displayed, along with the number of iterations required to find the maximum. Then the values of the control parameters (defaults and/or values supplied in the call) are printed. Then a table of estimates is shown. If applicable, the table includes confidence intervals. Finally, the values of \code{\link{AIC}} and BIC are displayed (if the scores are continuous and inference is parametric).
 }
 \examples{
 # Fit a subset of the cartilage data, assuming a Laplace marginal distribution. Compute
-# confidence intervals in the usual ML way (observed information matrix).
+# confidence intervals in the usual ML way (observed information matrix). Note that
+# using confint = bootstrap leads to bootstrap sampling and bootstrap intervals.
 
 data(cartilage)
-data = as.matrix(cartilage)[1:100, ]
-colnames(data) = c("c.1.1", "c.2.1")
-fit = sklars.omega(data, level = "interval", confint = "asymptotic",
-                   control = list(dist = "laplace"))
-summary(fit)
-vcov(fit)
+data.cart = as.matrix(cartilage)[1:100, ]
+colnames(data.cart) = c("c.1.1", "c.2.1")
+fit.lap = sklars.omega(data.cart, level = "balance", confint = "asymptotic",
+                       control = list(dist = "laplace"))
+summary(fit.lap)
 }
 \references{
 Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T2* relaxation time of acetabular and femoral cartilage with and without intra-articular Gd-DTPA2 in patients with femoroacetabular impingement. \emph{American Journal of Roentgenology}, \bold{204}(6), W695.
@@ -39,4 +39,3 @@ Nissi, M. J., Mortazavi, S., Hughes, J., Morgan, P., and Ellermann, J. (2015). T
 \seealso{
 \code{\link{sklars.omega}}
 }
-

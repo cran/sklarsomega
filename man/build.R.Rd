@@ -20,8 +20,6 @@ Build a Sklar's Omega correlation matrix.
 \details{
 This function accepts a data matrix and uses its column names to build the appropriate block-diagonal correlation matrix. If gold-standard scores are included, they should be in the first column of the matrix, and that column should be named 'g'. For a given coder, the column name should begin with 'c', and then the coder number and score number should follow, separated by '.' (so that multi-digit numbers can be accommodated). For example, 'c.12.2' denotes the second score for coder 12.
 
-See the package vignette for detailed information regarding the structure of the correlation matrix.
-
 Note that this function is called by \code{\link{sklars.omega}} and so is not a user-level
 function, per se. We expose the function so that interested users can more easily carry out
 simulation studies.
@@ -29,4 +27,3 @@ simulation studies.
 \seealso{
 \code{\link{sklars.omega}}, \code{\link{check.colnames}}
 }
-

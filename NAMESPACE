@@ -6,6 +6,7 @@ S3method(simulate, sklarsomega)
 S3method(influence, sklarsomega)
 S3method(logLik, sklarsomega)
 S3method(nobs, sklarsomega)
+S3method(confint, sklarsomega)
 export(sklars.omega)
 export(sklars.omega.bayes)
 export(pcat)
@@ -25,4 +26,7 @@ importFrom(mcmcse, mcse.mat)
 importFrom(stats, complete.cases, cov, dbeta, dgamma, dnorm, dt,
            ecdf, median, optim, pbeta, pgamma, pnorm, pt, qnorm,
            sd, simulate, var, rnorm, qt, qbeta, qgamma, quantile,
-           optimHess, influence, nobs, dlnorm, runif)
+           optimHess, influence, nobs, dlnorm, runif, ppois, qpois,
+           dpois, pnbinom, qnbinom, dnbinom)
+importFrom(dfoptim, hjkb)
+

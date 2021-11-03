@@ -23,4 +23,3 @@ This function extracts the number of observations from a model fit, and is princ
 \seealso{
 \code{\link{AIC}}
 }
-

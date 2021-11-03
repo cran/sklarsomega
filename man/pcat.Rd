@@ -20,4 +20,3 @@ Compute the cumulative distribution function for a categorical distribution.
 \details{
 This function uses \code{\link[LaplacesDemon]{dcat}} to compute the cdf for the categorical distribution with support \eqn{1, \dots , K} and probabilities \eqn{p = (p_1, \dots , p_K)'}.
 }
-

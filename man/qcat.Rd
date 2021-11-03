@@ -24,4 +24,3 @@ Compute the quantile function for a categorical distribution.
 \details{
 This function computes quantiles for the categorical distribution with support \eqn{1, \dots , K} and probabilities \eqn{p = (p_1, \dots , p_K)'}.
 }
-

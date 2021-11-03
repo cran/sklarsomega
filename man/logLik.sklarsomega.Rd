@@ -23,4 +23,3 @@ This function extracts the maximum value of the log objective function from a mo
 \seealso{
 \code{\link{AIC}}
 }
-
