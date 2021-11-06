@@ -1,7 +1,7 @@
 04876806ee02145fb8a9b4b8fa0c812d *COPYING
-c4b500d7f660475304baf9b4b9f87365 *DESCRIPTION
+6692ff9372a1e4005ce17d6b483b324e *DESCRIPTION
 5cbef1d8e2472a4b90b47f458b7ea61f *NAMESPACE
-6dc9ff72dfd9b171c169d812706797b9 *R/sklarsomega.R
+f298aff596585891ed1ae04476077661 *R/sklarsomega.R
 9075b2a2b7ca933ddcaab6610e991caf *R/zzz.R
 56f471a2f7ac7a1f1b0f1281c626032e *data/cartilage.rda
 699180c32afce98c9f5d97dbb7460ce7 *inst/doc/sklarsomega_vignette.pdf
@@ -16,7 +16,7 @@ c8e457970b6e7fcd4a15d6f1db222b5d *man/nobs.sklarsomega.Rd
 b3260eb13567af128d22cefbf3ed2a11 *man/pcat.Rd
 bd3e456bd2d75028b8c8221bd2bda9b4 *man/qcat.Rd
 0c147fb2569526190e0c983790986647 *man/residuals.sklarsomega.Rd
-d8dedd37d4a0c5c293efdc36f05406f4 *man/simulate.sklarsomega.Rd
+af25444fdaf969c760800b52650a22ed *man/simulate.sklarsomega.Rd
 47e75b785002a6a94d7289a395e85858 *man/sklars.omega.Rd
 01dfc04dcaa56a19e6d902f0cd580e1f *man/sklars.omega.bayes.Rd
 5b792e63becd2412652415e409134682 *man/summary.sklarsomega.Rd

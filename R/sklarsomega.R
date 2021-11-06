@@ -1777,24 +1777,23 @@ vcov.sklarsomega = function(object, ...)
 #' @export
 #'
 #' @examples
-#' # The following data were presented in Krippendorff (2013).
+#' # Fit a subset of the cartilage data, assuming a Laplace marginal distribution.
 #'
-#' data.nom = matrix(c(1,2,3,3,2,1,4,1,2,NA,NA,NA,
-#'                     1,2,3,3,2,2,4,1,2,5,NA,3,
-#'                     NA,3,3,3,2,3,4,2,2,5,1,NA,
-#'                     1,2,3,3,2,4,4,1,2,5,1,NA), 12, 4)
-#' colnames(data.nom) = c("c.1.1", "c.2.1", "c.3.1", "c.4.1")
-#' fit.nom = sklars.omega(data.nom, level = "nominal", confint = "none")
-#' summary(fit.nom)
+#' data(cartilage)
+#' data.cart = as.matrix(cartilage)[1:100, ]
+#' colnames(data.cart) = c("c.1.1", "c.2.1")
+#' fit.lap = sklars.omega(data.cart, level = "balance", confint = "none",
+#'                        control = list(dist = "laplace"))
+#' summary(fit.lap)
 #'
-#' # Simulate three datasets from the fitted model, and then
-#' # display the first dataset in matrix form.
+#' # Simulate three datasets from the fitted model, and then display the
+#' # head of the first dataset in matrix form.
 #'
-#' sim = simulate(fit.nom, nsim = 3, seed = 42)
-#' data.sim = t(fit.nom$data)
+#' sim = simulate(fit.lap, nsim = 3, seed = 42)
+#' data.sim = t(fit.lap$data)
 #' data.sim[! is.na(data.sim)] = sim[, 1]
 #' data.sim = t(data.sim)
-#' data.sim
+#' head(data.sim)
 
 simulate.sklarsomega = function(object, nsim = 1, seed = NULL, ...)
 {
