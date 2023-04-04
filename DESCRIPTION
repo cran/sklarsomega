@@ -1,8 +1,8 @@
 Package: sklarsomega
 Type: Package
 Title: Measuring Agreement Using Sklar's Omega Coefficient
-Version: 3.0-1
-Date: 2021-11-04
+Version: 3.0-2
+Date: 2023-04-04
 Author: John Hughes <drjphughesjr@gmail.com>
 Maintainer: John Hughes <drjphughesjr@gmail.com>
 Imports: extraDistr, hash, LaplacesDemon, Matrix, mcmcse, numDeriv,
@@ -16,8 +16,9 @@ Description: Provides tools for applying Sklar's Omega (Hughes, 2018) <arXiv:180
     and/or inter-coder agreement. Frequentist inference is supported for all levels
     of measurement. Bayesian inference is supported for continuous scores only.
 License: GPL (>= 2)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.1
 NeedsCompilation: yes
-Packaged: 2021-11-05 13:04:21 UTC; jphughesjr
+Packaged: 2023-04-04 16:25:42 UTC; johnhughes
+Encoding: UTF-8
 Repository: CRAN
-Date/Publication: 2021-11-06 14:50:02 UTC
+Date/Publication: 2023-04-04 16:50:02 UTC

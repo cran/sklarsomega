@@ -26,7 +26,7 @@ sklars.omega(
        \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"} or when \code{confint = "asymptotic"} and \code{level = "count"}. Defaults to 1,000.}
        \item{dist}{when \code{level = "balance"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, or \code{"empirical"}; when \code{level = "amount"}, one of \code{"gamma"} or \code{"empirical"}; when \code{level = "percentage"}, one of \code{"beta"} or \code{"kumaraswamy"}; when \code{level = "count"}, one of \code{"poisson"} or \code{"negbinomial"}.}
        \item{nodes}{the desired number of nodes in the cluster.}
-       \item{parallel}{logical; if TRUE (the default), bootstrapping is done in parallel.}
+       \item{parallel}{logical; if TRUE (the default is FALSE), bootstrapping is done in parallel.}
        \item{type}{one of the supported cluster types for \code{\link[parallel]{makeCluster}}. Defaults to \code{"SOCK"}.}
 }}
 }

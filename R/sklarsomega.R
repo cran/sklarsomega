@@ -75,7 +75,7 @@ build.R = function(data)
                 sub = matrix(omega[o], vals[j], vals[j])
                 diag(sub) = 1
                 block[k:(k + vals[j] - 1), k:(k + vals[j] - 1)] = sub
-                k = k + vals[j] - 1
+                k = k + vals[j]
                 o = o + 1
                 onames = c(onames, "intra")
             }
@@ -630,7 +630,7 @@ sandwich.helper = function(object)
 #'        \item{\code{bootit}}{the size of the (parametric) bootstrap sample. This applies when \code{confint = "bootstrap"} or when \code{confint = "asymptotic"} and \code{level = "count"}. Defaults to 1,000.}
 #'        \item{dist}{when \code{level = "balance"}, one of \code{"gaussian"}, \code{"laplace"}, \code{"t"}, or \code{"empirical"}; when \code{level = "amount"}, one of \code{"gamma"} or \code{"empirical"}; when \code{level = "percentage"}, one of \code{"beta"} or \code{"kumaraswamy"}; when \code{level = "count"}, one of \code{"poisson"} or \code{"negbinomial"}.}
 #'        \item{nodes}{the desired number of nodes in the cluster.}
-#'        \item{parallel}{logical; if TRUE (the default), bootstrapping is done in parallel.}
+#'        \item{parallel}{logical; if TRUE (the default is FALSE), bootstrapping is done in parallel.}
 #'        \item{type}{one of the supported cluster types for \code{\link[parallel]{makeCluster}}. Defaults to \code{"SOCK"}.}
 #' }
 #'
@@ -1139,7 +1139,10 @@ sklars.omega.bayes.gaussian_laplace = function(y, R, verbose, control)
             log.epsilon = quadratic.form(y, R.new, pfun, mu, sigma) - quadratic.form(y, R.old, pfun, mu, sigma)
             log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
             log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
-            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (log(runif(1)) < log.epsilon)
+                samples[j, 1:m] = eta_
+            else
+                samples[j, 1:m] = eta
             if (j == maxit)
                 break
         }
@@ -1229,7 +1232,10 @@ sklars.omega.bayes.t = function(y, R, verbose, control)
             log.epsilon = quadratic.form(y, R.new, pt, nu, mu) - quadratic.form(y, R.old, pt, nu, mu)
             log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
             log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
-            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (log(runif(1)) < log.epsilon)
+                samples[j, 1:m] = eta_
+            else
+                samples[j, 1:m] = eta
             if (j == maxit)
                 break
         }
@@ -1346,7 +1352,10 @@ sklars.omega.bayes.gamma_beta_kumaraswamy = function(y, R, verbose, control)
             log.epsilon = quadratic.form(y, R.new, pfun, param1, param2) - quadratic.form(y, R.old, pfun, param1, param2)
             log.epsilon = log.epsilon - 0.5 * (determinant(R.new, logarithm = TRUE)$modulus - determinant(R.old, logarithm = TRUE)$modulus)
             log.epsilon = log.epsilon + sum(eta) - sum(eta_) - 2 * (sum(log(1 + exp(eta))) - sum(log(1 + exp(eta_))))
-            samples[j, 1:m] = ifelse(log(runif(1)) < log.epsilon, eta_, eta)
+            if (log(runif(1)) < log.epsilon)
+                samples[j, 1:m] = eta_
+            else
+                samples[j, 1:m] = eta
             if (j == maxit)
                 break
         }
