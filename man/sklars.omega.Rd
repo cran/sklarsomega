@@ -39,7 +39,7 @@ Function \code{sklars.omega} returns an object of class \code{"sklarsomega"}, wh
         \item{coefficients}{a named vector of parameter estimates.}
         \item{confint}{the value of argument \code{confint}.}
         \item{control}{the list of control parameters.}
-        \item{convergence}{unless optimization failed, the value of \code{convergence} returned by \code{\link{optim}} or \code{\link{hjkb}}.}
+        \item{convergence}{unless optimization failed, the value of \code{convergence} returned by \code{\link{optim}} or \code{\link[dfoptim]{hjkb}}.}
         \item{cov.hat}{if \code{confint = "asymptotic"}, the estimate of the covariance matrix of the parameter estimator.}
         \item{data}{the matrix of scores, perhaps altered to remove rows (units) containing fewer than two scores.}
         \item{iter}{if optimization converged, the number of iterations required to optimize the objective function.}

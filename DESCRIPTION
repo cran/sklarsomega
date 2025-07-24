@@ -1,14 +1,16 @@
 Package: sklarsomega
 Type: Package
 Title: Measuring Agreement Using Sklar's Omega Coefficient
-Version: 3.0-2
-Date: 2023-04-04
-Author: John Hughes <drjphughesjr@gmail.com>
-Maintainer: John Hughes <drjphughesjr@gmail.com>
+Version: 3.0-3
+Date: 2025-07-24
+Authors@R: person(given = "John",
+                  family = "Hughes",
+                  role = c("aut", "cre"),
+                  email = "drjphughesjr@gmail.com")
 Imports: extraDistr, hash, LaplacesDemon, Matrix, mcmcse, numDeriv,
         spam, dfoptim
 Suggests: lattice, parallel, pbapply
-Description: Provides tools for applying Sklar's Omega (Hughes, 2018) <arXiv:1803.02734>
+Description: Provides tools for applying Sklar's Omega (Hughes, 2022) <doi:10.1007/s11222-022-10105-2>
     methodology to nominal scores, ordinal scores, percentages, counts, amounts (i.e.,
     non-negative real numbers), and balances (i.e., any real number). The framework can
     accommodate any number of units, any number of coders, and missingness; and
@@ -18,7 +20,9 @@ Description: Provides tools for applying Sklar's Omega (Hughes, 2018) <arXiv:180
 License: GPL (>= 2)
 RoxygenNote: 7.2.1
 NeedsCompilation: yes
-Packaged: 2023-04-04 16:25:42 UTC; johnhughes
+Packaged: 2025-07-24 20:22:54 UTC; jphughesjr
 Encoding: UTF-8
+Author: John Hughes [aut, cre]
+Maintainer: John Hughes <drjphughesjr@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-04-04 16:50:02 UTC
+Date/Publication: 2025-07-24 20:50:02 UTC

@@ -537,7 +537,7 @@ bootstrap.helper = function(object)
 }
 
 
-grad.helper = function(y, params, R, dist)
+gr.helper = function(y, params, R, dist)
 {
     gr = try(-grad(objective.DT, x = params, y = y, R = R, dist = dist), silent = TRUE)
     gr
@@ -556,7 +556,7 @@ sandwich.helper = function(object)
     {
         if (object$verbose && requireNamespace("pbapply", quietly = TRUE))
         {
-            gathered = pbapply::pblapply(data, grad.helper, params = object$coef, R = object$R, dist = object$control$dist)
+            gathered = pbapply::pblapply(data, gr.helper, params = object$coef, R = object$R, dist = object$control$dist)
             b = 1
             for (j in 1:object$control$bootit)
             {
@@ -574,7 +574,7 @@ sandwich.helper = function(object)
             b = 1
             for (j in 1:object$control$bootit)
             {
-                gr = try(grad.helper(data[[j]], params = object$coef, R = object$R, dist = object$control$dist), silent = TRUE)
+                gr = try(gr.helper(data[[j]], params = object$coef, R = object$R, dist = object$control$dist), silent = TRUE)
                 if (! inherits(gr, "try-error"))
                 {
                     meat = meat + gr %o% gr
@@ -589,9 +589,9 @@ sandwich.helper = function(object)
         cl = parallel::makeCluster(object$control$nodes, object$control$type)
         parallel::clusterEvalQ(cl, library(sklarsomega))
         if (object$verbose && requireNamespace("pbapply", quietly = TRUE))
-            gathered = pbapply::pblapply(data, grad.helper, params = object$coef, R = object$R, dist = object$control$dist, cl = cl)
+            gathered = pbapply::pblapply(data, gr.helper, params = object$coef, R = object$R, dist = object$control$dist, cl = cl)
         else
-            gathered = parallel::clusterApplyLB(cl, data, grad.helper, params = object$coef, R = object$R, dist = object$control$dist)
+            gathered = parallel::clusterApplyLB(cl, data, gr.helper, params = object$coef, R = object$R, dist = object$control$dist)
         parallel::stopCluster(cl)
         b = 1
         for (j in 1:object$control$bootit)
